@@ -77,8 +77,12 @@
 ---
 
 ## 🖼️ تصویر نمونه
-  
-> 
+
+   <img src="https://github.com/khanepaz/Uncertainty/blob/main/img/1.JPG" />
+    <img src="https://github.com/khanepaz/Uncertainty/blob/main/img/2.JPG" />
+    <img src="https://github.com/khanepaz/Uncertainty/blob/main/img/3.JPG" />
+    <img src="https://github.com/khanepaz/Uncertainty/blob/main/img/4.JPG" />
+    <img src="https://github.com/khanepaz/Uncertainty/blob/main/img/5.JPG" />
 
 
 

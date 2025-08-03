@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محاسبه‌گر عدم قطعیت پیشرفته</title>
+    <!-- External Libraries -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/contrib/auto-render.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&display=swap');
+        :root {
+            --primary-color: #667eea;
+            --primary-dark: #764ba2;
+            --secondary-color: #64748b;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --danger-color: #dc2626;
+            --background-color: #f8fafc;
+            --surface-color: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --border-radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+        .main-container {
+            background: var(--background-color);
+            min-height: 100vh;
+            padding: 2rem 0;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        .app-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+        }
+        .app-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .app-subtitle {
+            font-size: 1.1rem;
+            color: var(--secondary-color);
+            font-weight: 400;
+        }
+        .card {
+            background: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 1.5rem;
+            border-bottom: none;
+        }
+        .card-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .card-body {
+            padding: 2rem;
+        }
+        .form-section {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+        .form-section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .form-label {
+            font-weight: 500;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        .form-control, .form-select {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            background: var(--surface-color);
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            outline: none;
+        }
+        .btn {
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color), #047857);
+            color: white;
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger-color), #b91c1c);
+            color: white;
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary-color), #475569);
+            color: white;
+        }
+        .parameter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .test-fields {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+        #reso {
+            font-size: 0.7rem;
+            color: #64748b;
+        }
+        .math-equation {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            direction: ltr;
+            text-align: center;
+            font-size: 1.1rem;
+            box-shadow: var(--shadow-sm);
+            overflow-x: auto;
+        }
+        .results-section {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 2px solid #0ea5e9;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow-sm);
+        }
+        .result-label {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        .result-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            font-family: 'Courier New', monospace;
+        }
+        .alert {
+            border-radius: 8px;
+            border: none;
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            font-weight: 500;
+        }
+        .alert-danger {
+            background: linear-gradient(135deg, #fef2f2, #fee2e2);
+            color: var(--danger-color);
+            border-left: 4px solid var(--danger-color);
+        }
+        .alert-info {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            color: #0c4a6e;
+            border-left: 4px solid #0ea5e9;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 2rem 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--success-color));
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            padding: 0 1rem;
+        }
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            flex: 1;
+        }
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--border-color);
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            transition: var(--transition);
+        }
+        .step.active .step-number {
+            background: var(--primary-color);
+            color: white;
+        }
+        .step.completed .step-number {
+            background: var(--success-color);
+            color: white;
+        }
+        .step-title {
+            font-size: 0.8rem;
+            text-align: center;
+            color: var(--secondary-color);
+            font-weight: 500;
+        }
+        .step.active .step-title {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        .floating-action {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            z-index: 1000;
+        }
+        .fab {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            border: none;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .fab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px -3px rgb(0 0 0 / 0.2);
+        }
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .login-card {
+            background: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            padding: 2rem;
+            width: 100%;
+            max-width: 450px;
+        }
+        .login-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        @media (max-width: 768px) {
+            .app-title {
+                font-size: 2rem;
+            }
+            .parameter-grid {
+                grid-template-columns: 1fr;
+            }
+            .test-fields {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+            .math-equation {
+                font-size: 0.8rem;
+                padding: 1rem;
+            }
+            .floating-action {
+                bottom: 1rem;
+                left: 1rem;
+            }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- صفحه فعال‌سازی -->
+    <div id="activation-container" class="login-container">
+        <div class="login-card fade-in">
+            <h2 class="login-title"><i class="fas fa-key"></i> فعال‌سازی برنامه</h2>
+            <div class="form-section">
+                <p style="font-size: 0.9rem; color: #64748b; text-align: center;">
+                    برای استفاده از برنامه، رمز اولیه زیر را  به توسعه‌دهنده بدهید.
+                </p>
+                <p style="text-align: center; color: #64748b;">
+                    09193898001
+                  </p>
+                <div class="mb-3">
+                    <label class="form-label"><i class="fas fa-qrcode"></i> رمز اولیه:</label>
+                    <input type="text" id="challenge" class="form-control" readonly />
+                </div>
+                <div class="mb-3">
+                    <label for="licenseKey" class="form-label"><i class="fas fa-lock"></i> رمز ثانویه (از توسعه‌دهنده دریافت شده):</label>
+                    <input type="text" id="licenseKey" class="form-control" placeholder="رمز ثانویه را وارد کنید" />
+                </div>
+                <button class="btn btn-primary w-100" onclick="activate()">
+                    <i class="fas fa-check"></i> فعال‌سازی
+                </button>
+                <div id="activation-error" class="alert alert-danger mt-3" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- صفحه بازیابی پس از قفل -->
+    <div id="reactivation-container" class="login-container" style="display: none;">
+        <div class="login-card fade-in">
+            <h2 class="login-title"><i class="fas fa-lock"></i> دسترسی محدود شد</h2>
+            <div class="form-section">
+                <p style="text-align: center; color: #64748b;">
+                    شما به حداکثر تعداد استفاده رسیده‌اید.
+                </p>
+                <p style="text-align: center; color: #64748b;">
+                    برای ادامه استفاده، لطفاً با توسعه‌دهنده تماس بگیرید.
+                </p>
+                <p style="text-align: center; color: #64748b;">
+                  09193898001
+                </p>
+                <!-- <div class="mb-3">
+                    <label class="form-label"><i class="fas fa-key"></i> رمز بازیابی (از توسعه‌دهنده دریافت شده):</label>
+                    <input type="text" id="reactivationCode" class="form-control" placeholder="رمز بازیابی را وارد کنید" />
+                </div>
+                <button class="btn btn-primary w-100" onclick="reactivate()">
+                    <i class="fas fa-check"></i> فعال‌سازی مجدد
+                </button>
+                <div id="reactivation-error" class="alert alert-danger mt-3" style="display: none;"></div> -->
+            </div>
+        </div>
+    </div>
+
+    <!-- محتوای اصلی -->
+    <div id="main-content" class="main-container" style="display: none;">
+        <div class="container">
+            <div class="app-header fade-in header">
+                <h1 class="app-title">
+                    <i class="fas fa-calculator"></i>
+                    محاسبه‌گر عدم قطعیت پیشرفته
+                </h1>
+                <p class="app-subtitle">ابزار دقیق و حرفه‌ای برای محاسبه عدم قطعیت اندازه‌گیری</p>
+            </div>
+            <div class="step-indicator">
+                <div class="step active" id="step-indicator-1">
+                    <div class="step-number">1</div>
+                    <div class="step-title">انتخاب پارامتر</div>
+                </div>
+                <div class="step" id="step-indicator-2">
+                    <div class="step-number">2</div>
+                    <div class="step-title">تعریف زیرپارامترها</div>
+                </div>
+                <div class="step" id="step-indicator-3">
+                    <div class="step-number">3</div>
+                    <div class="step-title">منابع اضافی</div>
+                </div>
+                <div class="step" id="step-indicator-4">
+                    <div class="step-number">4</div>
+                    <div class="step-title">نتایج</div>
+                </div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 25%"></div>
+            </div>
+            <!-- مرحله 1: انتخاب پارامتر اصلی -->
+            <section id="step1" class="card fade-in">
+                <div class="card-header">
+                    <h2><i class="fas fa-cog"></i> مرحله 1: انتخاب پارامتر اصلی</h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-section">
+                        <div class="parameter-grid">
+                            <div>
+                                <label for="mainParameter" class="form-label">
+                                    <i class="fas fa-list"></i> پارامتر اصلی:
+                                </label>
+                                <select id="mainParameter" class="form-select" onchange="toggleCustomParameter()">
+                                    <option value="density">چگالی (ρ = m / V)</option>
+                                    <option value="stress">تنش (σ = F / A)</option>
+                                    <option value="elasticModulus">مدول الاستیسیته (E = σ / ε)</option>
+                                    <option value="custom">پارامتر سفارشی</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="customParameter" style="display: none;">
+                            <h3 class="form-section-title">
+                                <i class="fas fa-edit"></i> تعریف پارامتر جدید
+                            </h3>
+                            <div class="parameter-grid">
+                                <div>
+                                    <label for="customParamName" class="form-label">نام پارامتر:</label>
+                                    <input type="text" id="customParamName" class="form-control" placeholder="مثلاً: چگالی" />
+                                </div>
+                                <div>
+                                    <label for="formula" class="form-label">فرمول:</label>
+                                    <input type="text" id="formula" class="form-control" style="text-align: left;" dir="ltr" placeholder="مثلاً: σ = F / A" />
+                                    <small class="form-text text-muted">
+                                        فرمول را به شکل y = عبارت وارد کنید. عملیات مجاز: +, -, *, /, ^, sqrt(x)
+                                    </small>
+                                </div>
+                                <div>
+                                    <label for="subParametersCount" class="form-label">تعداد زیرپارامترها:</label>
+                                    <input type="number" id="subParametersCount" class="form-control" min="1" value="2" />
+                                </div>
+                                <div style="display: flex; align-items: end;">
+                                    <button class="btn btn-primary" onclick="validateAndGenerateSubParameters()">
+                                        <i class="fas fa-check"></i> تأیید
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- مرحله 2: تعریف زیرپارامترها -->
+            <section id="step2" class="card" style="display: none;">
+                <div class="card-header">
+                    <h2><i class="fas fa-sliders-h"></i> مرحله 2: تعریف زیرپارامترها</h2>
+                </div>
+                <div class="card-body">
+                    <div id="subParameters"></div>
+                </div>
+            </section>
+            <!-- مرحله 3: منابع اضافی -->
+            <section id="step3" class="card" style="display: none;">
+                <div class="card-header">
+                    <h2><i class="fas fa-plus-circle"></i> مرحله 3: منابع اضافی (اختیاری)</h2>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-success mb-3" onclick="addExternalSource()">
+                        <i class="fas fa-plus"></i> افزودن منبع جدید
+                    </button>
+                    <div id="externalSources"></div>
+                </div>
+            </section>
+            <!-- مرحله 4: محاسبه و خروجی -->
+            <section id="step4" class="card" style="display: none;">
+                <div class="card-header">
+                    <h2><i class="fas fa-chart-line"></i> مرحله 4: نتایج محاسبات</h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-section">
+                        <div class="parameter-grid">
+                            <div>
+                                <label for="resolutionDivisor" class="form-label">
+                                    <i class="fas fa-divide"></i> روش محاسبه رزولوشن: <span id="reso">(اگر عدد رزولوشنی که در برگه کالیبراسیون تجهیز درج شده است را عینا وارد کرده اید گزینه پیش فرض را انتخاب نمایید)</span>
+                                </label>
+                                <select id="resolutionDivisor" class="form-select">
+                                    <option value="2sqrt3"> divide to 2√3 (پیش‌فرض)</option>
+                                    <option value="sqrt3"> divide to √3</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-lg mt-3" onclick="calculateUncertainty()">
+                            <i class="fas fa-calculator"></i> محاسبه عدم قطعیت
+                        </button>
+                    </div>
+                    <div id="results" class="results-section" style="display: none;"></div>
+                    <div id="equations" class="math-equation" style="display: none;"></div>
+                    <div class="mt-4" id="export-section" style="display: none;">
+                        <button class="btn btn-success me-2" onclick="exportToExcel()">
+                            <i class="fas fa-file-excel"></i> خروجی اکسل
+                        </button>
+                        <button class="btn btn-secondary" onclick="window.print()">
+                            <i class="fas fa-print"></i> چاپ نتایج
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <div class="floating-action">
+            <button class="fab" onclick="scrollToTop()" title="بازگشت به بالا">
+                <i class="fas fa-arrow-up"></i>
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const _0x4718f9=_0x531c;(function(_0x5a6106,_0x2fad83){const _0x188a4f=_0x531c,_0x55035c=_0x5a6106();while(!![]){try{const _0x300d49=parseInt(_0x188a4f(0x1ed))/0x1+parseInt(_0x188a4f(0x235))/0x2+-parseInt(_0x188a4f(0x1b4))/0x3*(-parseInt(_0x188a4f(0x1b7))/0x4)+-parseInt(_0x188a4f(0x15e))/0x5+-parseInt(_0x188a4f(0x1ff))/0x6*(-parseInt(_0x188a4f(0x1e2))/0x7)+parseInt(_0x188a4f(0x1eb))/0x8+-parseInt(_0x188a4f(0x1d1))/0x9;if(_0x300d49===_0x2fad83)break;else _0x55035c['push'](_0x55035c['shift']());}catch(_0xd8fe58){_0x55035c['push'](_0x55035c['shift']());}}}(_0x1495,0x7fe82));const SECRET_KEY=_0x4718f9(0x18d);function generateChallenge(){const _0x2f8eb8=_0x4718f9,_0xac305c=new Date(),_0x43b5cc=_0xac305c[_0x2f8eb8(0x207)]()[_0x2f8eb8(0x198)]('T')[0x1][_0x2f8eb8(0x21f)](0x0,0x2),_0x3c78d5=_0xac305c[_0x2f8eb8(0x207)]()[_0x2f8eb8(0x198)]('T')[0x0]+'\x20'+_0x43b5cc,_0x340d61=navigator['userAgent'],_0x5ad681=screen[_0x2f8eb8(0x228)],_0x414433=screen['height'],_0x3fc720=_0x3c78d5+'|'+_0x340d61['slice'](0x0,0x32)+'|'+_0x5ad681+'x'+_0x414433;return simpleHash(_0x3fc720)['toUpperCase']();}function simpleHash(_0x1d3e42){const _0x189c11=_0x4718f9;let _0x31723e=0x0;for(let _0x2d19d6=0x0;_0x2d19d6<_0x1d3e42['length'];_0x2d19d6++){const _0x4f6dfd=_0x1d3e42[_0x189c11(0x16c)](_0x2d19d6);_0x31723e=(_0x31723e<<0x5)-_0x31723e+_0x4f6dfd;}return Math[_0x189c11(0x146)](_0x31723e)[_0x189c11(0x203)](0x24)['slice'](0x0,0xa);}function generateLicense(_0x4bebff){const _0x5f2f1f=_0x4718f9,_0xc0fb85=_0x4bebff+'|'+SECRET_KEY;return simpleHash(_0xc0fb85)['toUpperCase']()[_0x5f2f1f(0x1b9)](0x0,0x8);}function generateReactivationCode(){const _0x12ad79=_0x4718f9,_0x4a242f=generateChallenge(),_0x427601=_0x12ad79(0x211)+_0x4a242f+'-'+SECRET_KEY;return simpleHash(_0x427601)[_0x12ad79(0x1f6)]()[_0x12ad79(0x1b9)](0x0,0xa);}function activate(){const _0x237078=_0x4718f9,_0x5b1df4=document[_0x237078(0x20b)]('challenge')[_0x237078(0x223)][_0x237078(0x174)](),_0x1e8f51=document[_0x237078(0x20b)]('licenseKey')[_0x237078(0x223)]['trim'](),_0x209dc7=document[_0x237078(0x20b)](_0x237078(0x19d));_0x209dc7[_0x237078(0x19f)][_0x237078(0x1e1)]=_0x237078(0x178);if(!_0x5b1df4||!_0x1e8f51){_0x209dc7[_0x237078(0x1fd)]='لطفاً\x20همه\x20فیلدها\x20را\x20پر\x20کنید.',_0x209dc7[_0x237078(0x19f)][_0x237078(0x1e1)]=_0x237078(0x184);return;}const _0x3b5db3=generateLicense(_0x5b1df4);_0x1e8f51===_0x3b5db3?(localStorage[_0x237078(0x15d)](_0x237078(0x1d0),_0x237078(0x205)),localStorage[_0x237078(0x15d)](_0x237078(0x239),_0x5b1df4),localStorage[_0x237078(0x15d)]('usageCount','0'),document['getElementById'](_0x237078(0x159))['style'][_0x237078(0x1e1)]=_0x237078(0x178),document[_0x237078(0x20b)]('main-content')['style'][_0x237078(0x1e1)]='block',toggleCustomParameter()):(_0x209dc7[_0x237078(0x1fd)]=_0x237078(0x180),_0x209dc7['style']['display']=_0x237078(0x184));}function reactivate(){const _0x5764d3=_0x4718f9,_0x18d017=document['getElementById'](_0x5764d3(0x1e7))[_0x5764d3(0x223)][_0x5764d3(0x174)](),_0x981175=document[_0x5764d3(0x20b)](_0x5764d3(0x216));_0x981175[_0x5764d3(0x19f)]['display']=_0x5764d3(0x178);const _0x48c0e0=generateReactivationCode();_0x18d017===_0x48c0e0?(localStorage[_0x5764d3(0x15d)]('usageCount','0'),localStorage['removeItem'](_0x5764d3(0x1dd)),document[_0x5764d3(0x20b)](_0x5764d3(0x1a3))['style'][_0x5764d3(0x1e1)]='none',document[_0x5764d3(0x20b)]('main-content')[_0x5764d3(0x19f)][_0x5764d3(0x1e1)]=_0x5764d3(0x184),toggleCustomParameter(),alert(_0x5764d3(0x1fb))):(_0x981175[_0x5764d3(0x1fd)]='رمز\x20بازیابی\x20نامعتبر\x20است.',_0x981175[_0x5764d3(0x19f)]['display']='block');}function getUsageCount(){const _0x3a7cac=_0x4718f9;return parseInt(localStorage[_0x3a7cac(0x1a1)](_0x3a7cac(0x245))||'0');}function incrementUsageCount(){const _0x3ce587=_0x4718f9,_0xb841=getUsageCount(),_0x630436=_0xb841+0x1;localStorage[_0x3ce587(0x15d)](_0x3ce587(0x245),_0x630436['toString']()),_0x630436>=0x2&&(localStorage[_0x3ce587(0x15d)](_0x3ce587(0x1dd),_0x3ce587(0x205)),document['getElementById'](_0x3ce587(0x18c))[_0x3ce587(0x19f)][_0x3ce587(0x1e1)]=_0x3ce587(0x178),document[_0x3ce587(0x20b)](_0x3ce587(0x1a3))['style']['display']=_0x3ce587(0x15b),alert('شما\x20به\x20حداکثر\x20تعداد\x20استفاده\x20(2\x20بار)\x20رسیده‌اید.\x20دیگر\x20امکان\x20استفاده\x20وجود\x20ندارد.'));}document[_0x4718f9(0x19a)](_0x4718f9(0x16a),function(){const _0x29d16d=_0x4718f9,_0x2e68e7=generateChallenge();document[_0x29d16d(0x20b)](_0x29d16d(0x163))[_0x29d16d(0x223)]=_0x2e68e7;if(localStorage[_0x29d16d(0x1a1)]('usageLocked')===_0x29d16d(0x205)){document[_0x29d16d(0x20b)]('activation-container')[_0x29d16d(0x19f)][_0x29d16d(0x1e1)]=_0x29d16d(0x178),document[_0x29d16d(0x20b)]('main-content')[_0x29d16d(0x19f)]['display']=_0x29d16d(0x178),document[_0x29d16d(0x20b)](_0x29d16d(0x1a3))[_0x29d16d(0x19f)]['display']=_0x29d16d(0x15b);return;}localStorage[_0x29d16d(0x1a1)](_0x29d16d(0x1d0))===_0x29d16d(0x205)&&localStorage['getItem'](_0x29d16d(0x239))===_0x2e68e7&&getUsageCount()<0x2?(document[_0x29d16d(0x20b)](_0x29d16d(0x159))['style'][_0x29d16d(0x1e1)]=_0x29d16d(0x178),document[_0x29d16d(0x20b)](_0x29d16d(0x18c))[_0x29d16d(0x19f)][_0x29d16d(0x1e1)]=_0x29d16d(0x184),toggleCustomParameter()):(document['getElementById'](_0x29d16d(0x159))[_0x29d16d(0x19f)][_0x29d16d(0x1e1)]=_0x29d16d(0x15b),document[_0x29d16d(0x20b)](_0x29d16d(0x18c))[_0x29d16d(0x19f)]['display']=_0x29d16d(0x178));const _0x707ee0=new IntersectionObserver(_0x1283cf=>{_0x1283cf['forEach'](_0x12245b=>{const _0x53fefc=_0x531c;if(_0x12245b[_0x53fefc(0x23b)])_0x12245b['target']['classList']['add'](_0x53fefc(0x1be));});},{'threshold':0.1});document[_0x29d16d(0x234)](_0x29d16d(0x1de))[_0x29d16d(0x23c)](_0x313c9e=>_0x707ee0[_0x29d16d(0x1ee)](_0x313c9e));});const predefinedParameters={'density':{'name':_0x4718f9(0x17f),'formula':'ρ\x20=\x20m\x20/\x20V','subParameters':[{'name':'جرم\x20(m)','unit':'kg','symbol':'m'},{'name':_0x4718f9(0x229),'unit':'m³','symbol':'V'}],'partialDerivatives':{'m':_0x4718f9(0x143),'V':'-m/(V^2)'}},'stress':{'name':_0x4718f9(0x1d9),'formula':'σ\x20=\x20F\x20/\x20A','subParameters':[{'name':'نیرو\x20(F)','unit':'N','symbol':'F'},{'name':_0x4718f9(0x21a),'unit':'m²','symbol':'A'}],'partialDerivatives':{'F':_0x4718f9(0x1ca),'A':_0x4718f9(0x232)}},'elasticModulus':{'name':'مدول\x20الاستیسیته','formula':_0x4718f9(0x191),'subParameters':[{'name':_0x4718f9(0x147),'unit':'Pa','symbol':'σ'},{'name':_0x4718f9(0x156),'unit':'','symbol':'ε'}],'partialDerivatives':{'σ':_0x4718f9(0x218),'ε':'-σ/(ε^2)'}}};let subParameters=[],externalSources=[],detailedResults=[],currentStep=0x1;function calculateUncertainty(){const _0x22c519=_0x4718f9,_0x4d5fb1=getUsageCount();if(_0x4d5fb1>=0x2){showError(_0x22c519(0x24c));return;}const _0x437799=document[_0x22c519(0x20b)](_0x22c519(0x148))[_0x22c519(0x223)],_0x30cf27=document[_0x22c519(0x20b)](_0x22c519(0x192))[_0x22c519(0x223)],_0x38e3c8=document[_0x22c519(0x20b)](_0x22c519(0x17e)),_0x37280a=document[_0x22c519(0x20b)](_0x22c519(0x145));_0x38e3c8['innerHTML']='',_0x37280a[_0x22c519(0x1fd)]='',_0x38e3c8[_0x22c519(0x19f)][_0x22c519(0x1e1)]=_0x22c519(0x178),_0x37280a[_0x22c519(0x19f)][_0x22c519(0x1e1)]='none';let _0x57965f=0x0;window['equations']=[];const _0x18cfd3=[];for(let _0x54b1d0=0x0;_0x54b1d0<subParameters[_0x22c519(0x1da)];_0x54b1d0++){const _0x316493=parseFloat(document[_0x22c519(0x20b)]('subParamValue'+_0x54b1d0)[_0x22c519(0x223)]),_0x181e9e=document[_0x22c519(0x20b)](_0x22c519(0x1e3)+_0x54b1d0)['value'];if(!_0x316493){showError('لطفاً\x20مقدار\x20اندازه‌گیری\x20برای\x20زیرپارامتر\x20'+(_0x54b1d0+0x1)+_0x22c519(0x1ba));return;}if(_0x181e9e!=='constant'){const _0x4e3827=parseInt(document['getElementById'](_0x22c519(0x1e6)+_0x54b1d0)[_0x22c519(0x223)])||0x0;if(_0x4e3827<0x1){showError(_0x22c519(0x1f4)+(_0x54b1d0+0x1)+'\x20باید\x20حداقل\x201\x20باشد.');return;}for(let _0x8d683a=0x0;_0x8d683a<_0x4e3827;_0x8d683a++){const _0x381ede=parseFloat(document[_0x22c519(0x20b)](_0x22c519(0x1b8)+_0x54b1d0+'_'+_0x8d683a)['value']);if(isNaN(_0x381ede)){showError(_0x22c519(0x22f)+(_0x8d683a+0x1)+_0x22c519(0x1ea)+(_0x54b1d0+0x1)+_0x22c519(0x22e));return;}}}}console[_0x22c519(0x18a)](_0x22c519(0x16e)),subParameters[_0x22c519(0x23c)]((_0x39b156,_0x257a7d)=>{const _0x48aa0e=_0x22c519,_0x4ebb0b=document[_0x48aa0e(0x20b)](_0x48aa0e(0x1ce)+_0x257a7d)['value'],_0x30e8bf=parseFloat(document[_0x48aa0e(0x20b)](_0x48aa0e(0x188)+_0x257a7d)[_0x48aa0e(0x223)]),_0x81ae86=document['getElementById'](_0x48aa0e(0x1e3)+_0x257a7d)['value'];console[_0x48aa0e(0x18a)](_0x48aa0e(0x1a0)+(_0x257a7d+0x1)+':\x20'+_0x4ebb0b+'\x20('+_0x81ae86+_0x48aa0e(0x1d8)),console[_0x48aa0e(0x18a)](_0x48aa0e(0x179)+_0x30e8bf);if(_0x81ae86===_0x48aa0e(0x164)){console[_0x48aa0e(0x18a)](_0x4ebb0b+_0x48aa0e(0x150)),window[_0x48aa0e(0x145)][_0x48aa0e(0x1ad)](_0x48aa0e(0x1c0)+_0x4ebb0b+_0x48aa0e(0x1c6)+_0x39b156[_0x48aa0e(0x1a5)]+_0x48aa0e(0x22b)),_0x18cfd3['push']({'name':_0x4ebb0b,'value':_0x30e8bf,'tests':[],'mean':0x0,'standardDeviation':0x0,'u_repeatability':0x0,'u_resolution':0x0,'u_calibration':0x0,'u_drift':0x0,'ui':0x0,'partialDerivative':0x0,'partialDerivativeDisplay':'0','partialDerivativeFormula':_0x48aa0e(0x220)+_0x39b156['symbol']+'}','contribution':0x0,'resolution':0x0,'resolutionDist':'','calibration':0x0,'drift':0x0});return;}const _0x331228=parseInt(document[_0x48aa0e(0x20b)](_0x48aa0e(0x1e6)+_0x257a7d)[_0x48aa0e(0x223)])||0x0,_0x2b2eac=[];for(let _0x47f131=0x0;_0x47f131<_0x331228;_0x47f131++){const _0x6e78c4=parseFloat(document['getElementById']('testValue'+_0x257a7d+'_'+_0x47f131)[_0x48aa0e(0x223)]);if(!isNaN(_0x6e78c4))_0x2b2eac[_0x48aa0e(0x1ad)](_0x6e78c4);}const _0x5e2723=parseFloat(document['getElementById'](_0x48aa0e(0x18e)+_0x257a7d)['value'])||0x0,_0x3e1f83=document[_0x48aa0e(0x20b)](_0x48aa0e(0x1ec)+_0x257a7d)[_0x48aa0e(0x223)],_0x75c98b=parseFloat(document['getElementById'](_0x48aa0e(0x18b)+_0x257a7d)[_0x48aa0e(0x223)])||0x0,_0x24ea7d=parseFloat(document[_0x48aa0e(0x20b)](_0x48aa0e(0x183)+_0x257a7d)['value'])||0x0,_0x44be09=_0x2b2eac[_0x48aa0e(0x1da)]?_0x2b2eac[_0x48aa0e(0x1d6)]((_0x22d65c,_0x4d2104)=>_0x22d65c+_0x4d2104,0x0)/_0x2b2eac[_0x48aa0e(0x1da)]:0x0,_0x320289=_0x2b2eac[_0x48aa0e(0x1da)]>0x1?_0x2b2eac['reduce']((_0x3ac689,_0x12a7c8)=>_0x3ac689+Math[_0x48aa0e(0x17b)](_0x12a7c8-_0x44be09,0x2),0x0)/(_0x2b2eac[_0x48aa0e(0x1da)]-0x1):0x0,_0x51d1bc=Math[_0x48aa0e(0x1f0)](_0x320289),_0x3d44a3=_0x2b2eac['length']>0x0?_0x51d1bc/Math['sqrt'](_0x2b2eac[_0x48aa0e(0x1da)]):0x0;let _0x57f5df=0x0;if(_0x5e2723>0x0){if(_0x3e1f83===_0x48aa0e(0x15a))_0x57f5df=_0x5e2723/(_0x30cf27===_0x48aa0e(0x248)?Math[_0x48aa0e(0x1f0)](0x3):0x2*Math[_0x48aa0e(0x1f0)](0x3));else _0x3e1f83===_0x48aa0e(0x1b5)?_0x57f5df=_0x5e2723/Math[_0x48aa0e(0x1f0)](0x6):_0x57f5df=_0x5e2723;}const _0x3a74f9=_0x75c98b>0x0?_0x75c98b/0x2:0x0,_0x5dd10a=_0x24ea7d||0x0,_0x323a68=Math['sqrt'](Math[_0x48aa0e(0x17b)](_0x57f5df,0x2)+Math['pow'](_0x3d44a3,0x2)+Math['pow'](_0x3a74f9,0x2)+Math['pow'](_0x5dd10a,0x2));let _0xea0112=0x1,_0x5132fc='1',_0x3e3001='\x5cfrac{\x5cpartial\x20f}{\x5cpartial\x20'+_0x39b156[_0x48aa0e(0x1a5)]+'}';if(_0x437799!==_0x48aa0e(0x23a)){const _0x3dd134=predefinedParameters[_0x437799][_0x48aa0e(0x1f8)][_0x39b156[_0x48aa0e(0x1a5)]];if(_0x3dd134){const _0x437166={};subParameters[_0x48aa0e(0x23c)]((_0xa2d803,_0x4d8edc)=>{const _0x44ee91=_0x48aa0e;_0x437166[_0xa2d803[_0x44ee91(0x1a5)]]=parseFloat(document[_0x44ee91(0x20b)](_0x44ee91(0x188)+_0x4d8edc)[_0x44ee91(0x223)])||0x1;});try{_0xea0112=math[_0x48aa0e(0x206)](_0x3dd134,_0x437166),_0x5132fc=_0x3dd134['replace'](/\*/g,_0x48aa0e(0x1c2))[_0x48aa0e(0x217)](/\^(\w+)/g,_0x48aa0e(0x23e));}catch(_0x34c555){showError('خطا\x20در\x20محاسبه\x20مشتق\x20جزئی:\x20'+_0x34c555[_0x48aa0e(0x1c4)]);return;}}}else{const _0x543bf8=document['getElementById'](_0x48aa0e(0x155))[_0x48aa0e(0x223)][_0x48aa0e(0x198)]('=')[0x1][_0x48aa0e(0x174)]();try{const _0xe91ab6=math[_0x48aa0e(0x190)](_0x543bf8,_0x39b156[_0x48aa0e(0x1a5)]);let _0x125e28=_0xe91ab6[_0x48aa0e(0x203)]();_0x5132fc=_0x125e28['replace'](/\*/g,_0x48aa0e(0x1f9));const _0x5f39de={};subParameters[_0x48aa0e(0x23c)]((_0x369bb3,_0x56864c)=>{const _0x4b5d14=_0x48aa0e;_0x5f39de[_0x369bb3[_0x4b5d14(0x1a5)]]=parseFloat(document[_0x4b5d14(0x20b)]('subParamValue'+_0x56864c)[_0x4b5d14(0x223)])||0x1;}),_0xea0112=_0xe91ab6['evaluate'](_0x5f39de);}catch(_0x5f0ffa){showError(_0x48aa0e(0x1d2)+_0x5f0ffa[_0x48aa0e(0x1c4)]);return;}}const _0x5860a5=Math[_0x48aa0e(0x17b)](_0xea0112*_0x323a68,0x2);_0x57965f+=_0x5860a5,_0x18cfd3['push']({'name':_0x4ebb0b,'value':_0x30e8bf,'tests':_0x2b2eac,'mean':_0x44be09,'standardDeviation':_0x51d1bc,'u_repeatability':_0x3d44a3,'u_resolution':_0x57f5df,'u_calibration':_0x3a74f9,'u_drift':_0x5dd10a,'ui':_0x323a68,'partialDerivative':_0xea0112,'partialDerivativeDisplay':_0x5132fc,'partialDerivativeFormula':_0x3e3001,'contribution':_0x5860a5,'resolution':_0x5e2723,'resolutionDist':_0x3e1f83,'calibration':_0x75c98b,'drift':_0x24ea7d});const _0x3e0b52=_0x3e1f83==='rectangular'?_0x30cf27===_0x48aa0e(0x248)?_0x48aa0e(0x1f2):'2\x5csqrt{3}':_0x3e1f83===_0x48aa0e(0x1b5)?_0x48aa0e(0x176):'1';_0x2b2eac['length']>0x1&&(window[_0x48aa0e(0x145)][_0x48aa0e(0x1ad)]('s_{'+_0x4ebb0b+_0x48aa0e(0x1f7)+_0x2b2eac[_0x48aa0e(0x1da)]+_0x48aa0e(0x1fa)+(_0x2b2eac['length']-0x1)+_0x48aa0e(0x162)+_0x51d1bc['toFixed'](0x4)),window['equations']['push'](_0x48aa0e(0x1a2)+_0x4ebb0b+_0x48aa0e(0x173)+_0x4ebb0b+'}}{\x5csqrt{'+_0x2b2eac[_0x48aa0e(0x1da)]+_0x48aa0e(0x162)+_0x3d44a3[_0x48aa0e(0x22d)](0x4)));_0x5e2723>0x0&&window[_0x48aa0e(0x145)][_0x48aa0e(0x1ad)](_0x48aa0e(0x1b0)+_0x4ebb0b+_0x48aa0e(0x210)+_0x5e2723[_0x48aa0e(0x22d)](0x3)+'}{'+_0x3e0b52+_0x48aa0e(0x142)+_0x57f5df[_0x48aa0e(0x22d)](0x4));_0x75c98b>0x0&&window[_0x48aa0e(0x145)][_0x48aa0e(0x1ad)](_0x48aa0e(0x21c)+_0x4ebb0b+_0x48aa0e(0x210)+_0x75c98b[_0x48aa0e(0x22d)](0x3)+'}{2}\x20=\x20'+_0x3a74f9[_0x48aa0e(0x22d)](0x4));window[_0x48aa0e(0x145)]['push'](_0x3e3001+_0x48aa0e(0x237)+_0x5132fc+_0x48aa0e(0x237)+_0xea0112[_0x48aa0e(0x22d)](0x4));let _0x4a7be7=[];if(_0x57f5df>0x0)_0x4a7be7[_0x48aa0e(0x1ad)](_0x48aa0e(0x1b0)+_0x4ebb0b+_0x48aa0e(0x1a9));if(_0x3d44a3>0x0)_0x4a7be7[_0x48aa0e(0x1ad)]('u_{rep,'+_0x4ebb0b+_0x48aa0e(0x1a9));if(_0x3a74f9>0x0)_0x4a7be7[_0x48aa0e(0x1ad)](_0x48aa0e(0x21c)+_0x4ebb0b+_0x48aa0e(0x1a9));if(_0x5dd10a>0x0)_0x4a7be7[_0x48aa0e(0x1ad)](_0x48aa0e(0x202)+_0x4ebb0b+_0x48aa0e(0x1a9));window[_0x48aa0e(0x145)][_0x48aa0e(0x1ad)](_0x48aa0e(0x233)+_0x4ebb0b+_0x48aa0e(0x1ac)+_0x4a7be7[_0x48aa0e(0x171)](_0x48aa0e(0x158))+_0x48aa0e(0x142)+_0x323a68['toFixed'](0x4)),window[_0x48aa0e(0x145)]['push'](_0x48aa0e(0x18f)+_0x39b156[_0x48aa0e(0x1a5)]+_0x48aa0e(0x1f3)+_0x4ebb0b+_0x48aa0e(0x19c)+_0xea0112['toFixed'](0x4)+')^2\x20\x5ccdot\x20('+_0x323a68['toFixed'](0x4)+_0x48aa0e(0x195)+_0x5860a5['toFixed'](0x6));}),externalSources[_0x22c519(0x23c)]((_0x1b0cc0,_0x1df9b1)=>{const _0x1b19ca=_0x22c519,_0x482529=document['getElementById'](_0x1b19ca(0x161)+_0x1df9b1)[_0x1b19ca(0x223)]||_0x1b19ca(0x209)+(_0x1df9b1+0x1),_0x1da12f=parseFloat(document[_0x1b19ca(0x20b)](_0x1b19ca(0x19e)+_0x1df9b1)['value'])||0x0,_0x201391=document['getElementById'](_0x1b19ca(0x222)+_0x1df9b1)[_0x1b19ca(0x223)],_0x2a8f3f=parseFloat(document[_0x1b19ca(0x20b)](_0x1b19ca(0x1c7)+_0x1df9b1)['value'])||0x2;if(_0x1da12f>0x0){let _0x5cb441;if(_0x201391===_0x1b19ca(0x15a))_0x5cb441=_0x1da12f/Math['sqrt'](0x3);else{if(_0x201391==='triangular')_0x5cb441=_0x1da12f/Math[_0x1b19ca(0x1f0)](0x6);else _0x5cb441=_0x1da12f;}const _0x7ffced=_0x5cb441/_0x2a8f3f,_0x2ac9f3=Math[_0x1b19ca(0x17b)](_0x7ffced,0x2);_0x57965f+=_0x2ac9f3,window[_0x1b19ca(0x145)][_0x1b19ca(0x1ad)](_0x1b19ca(0x233)+_0x482529+_0x1b19ca(0x210)+_0x1da12f[_0x1b19ca(0x22d)](0x4)+'}{'+(_0x201391===_0x1b19ca(0x15a)?_0x1b19ca(0x1f2):_0x201391==='triangular'?_0x1b19ca(0x176):'1')+_0x1b19ca(0x1b2)+_0x2a8f3f+_0x1b19ca(0x142)+_0x7ffced[_0x1b19ca(0x22d)](0x4));}});const _0x9278d8=Math[_0x22c519(0x1f0)](_0x57965f),_0x2aa511=0x2*_0x9278d8;if(_0x9278d8===0x0||isNaN(_0x9278d8)){showError(_0x22c519(0x204));return;}window[_0x22c519(0x145)][_0x22c519(0x1ad)]('u_c\x20=\x20\x5csqrt{\x5csum_{i=1}^{n}\x20\x5cleft(\x5cfrac{\x5cpartial\x20f}{\x5cpartial\x20x_i}\x5cright)^2\x20u_i^2}\x20=\x20\x5csqrt{'+_0x57965f['toFixed'](0x6)+_0x22c519(0x142)+_0x9278d8[_0x22c519(0x22d)](0x4)),window[_0x22c519(0x145)]['push']('U\x20=\x20k\x20\x5ctimes\x20u_c\x20=\x202\x20\x5ctimes\x20'+_0x9278d8[_0x22c519(0x22d)](0x4)+_0x22c519(0x237)+_0x2aa511[_0x22c519(0x22d)](0x4)),window[_0x22c519(0x23f)]={'combinedUncertainty':_0x9278d8,'expandedUncertainty':_0x2aa511,'totalUncertainty':_0x57965f},window[_0x22c519(0x213)]=_0x18cfd3,incrementUsageCount(),displayResults(_0x9278d8,_0x2aa511,_0x18cfd3),displayEquations(),document[_0x22c519(0x20b)](_0x22c519(0x151))[_0x22c519(0x19f)][_0x22c519(0x1e1)]=_0x22c519(0x184),updateStepIndicator(0x4),document['getElementById']('results')[_0x22c519(0x249)]({'behavior':'smooth'});const _0x253a34=0x1-getUsageCount();_0x253a34>=0x0&&setTimeout(()=>{const _0x51e06a=_0x22c519;alert(_0x51e06a(0x226)+(_0x253a34+0x1)+_0x51e06a(0x241));},0x320);}function displayResults(_0x381447,_0x35f74c,_0x4d742b){const _0x1a37b2=_0x4718f9,_0x5533bb=document['getElementById'](_0x1a37b2(0x17e)),_0x2a5b57=window[_0x1a37b2(0x23f)]?.['combinedUncertainty']??_0x381447,_0x587a45=window[_0x1a37b2(0x23f)]?.['expandedUncertainty']??_0x35f74c,_0x4fe19d=window[_0x1a37b2(0x23f)]?.[_0x1a37b2(0x214)]??0x0;_0x5533bb[_0x1a37b2(0x1fd)]=_0x1a37b2(0x20d)+_0x4fe19d[_0x1a37b2(0x22d)](0x8)+_0x1a37b2(0x1bf)+_0x2a5b57[_0x1a37b2(0x22d)](0x6)+_0x1a37b2(0x1d4)+_0x587a45[_0x1a37b2(0x22d)](0x6)+_0x1a37b2(0x187)+_0x4d742b['map'](_0x10aa14=>_0x1a37b2(0x194)+_0x10aa14[_0x1a37b2(0x225)]+'\x20'+(_0x10aa14['ui']===0x0?_0x1a37b2(0x236):'')+'</h5>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22parameter-grid\x22\x20style=\x22grid-template-columns:\x20repeat(auto-fit,\x20minmax(150px,\x201fr));\x20gap:\x200.5rem;\x20font-size:\x200.85rem;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div><strong>مقدار:</strong>\x20'+_0x10aa14['value']+_0x1a37b2(0x21d)+_0x10aa14['ui'][_0x1a37b2(0x22d)](0x4)+'</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div><strong>مشتق\x20جزئی:</strong>\x20'+_0x10aa14[_0x1a37b2(0x242)][_0x1a37b2(0x22d)](0x4)+_0x1a37b2(0x1f1)+_0x10aa14[_0x1a37b2(0x157)]['toFixed'](0x6)+_0x1a37b2(0x17d))[_0x1a37b2(0x171)]('')+_0x1a37b2(0x21e),_0x5533bb[_0x1a37b2(0x19f)]['display']=_0x1a37b2(0x184),_0x5533bb['classList'][_0x1a37b2(0x1df)](_0x1a37b2(0x1be));}function _0x531c(_0x5c2920,_0x1496e0){const _0x1495ae=_0x1495();return _0x531c=function(_0x531cf1,_0x178bb5){_0x531cf1=_0x531cf1-0x142;let _0x8a003=_0x1495ae[_0x531cf1];return _0x8a003;},_0x531c(_0x5c2920,_0x1496e0);}function displayEquations(){const _0x22817f=_0x4718f9,_0x106043=document[_0x22817f(0x20b)](_0x22817f(0x145));_0x106043['innerHTML']=_0x22817f(0x20c),window['equations'][_0x22817f(0x23c)]((_0x564d78,_0x28024e)=>{const _0x5564c6=_0x22817f,_0x35dd83=document['createElement'](_0x5564c6(0x19b));_0x35dd83[_0x5564c6(0x215)]=_0x5564c6(0x1b3),_0x35dd83[_0x5564c6(0x19f)][_0x5564c6(0x170)]=_0x28024e*0.1+'s',_0x35dd83[_0x5564c6(0x19f)][_0x5564c6(0x200)]=_0x5564c6(0x1e9),_0x106043[_0x5564c6(0x224)](_0x35dd83);try{katex[_0x5564c6(0x1c1)](_0x564d78,_0x35dd83,{'throwOnError':![],'displayMode':!![],'strict':![]});}catch(_0x883fa1){_0x35dd83[_0x5564c6(0x1fd)]=_0x5564c6(0x1c8)+_0x564d78+'</code>';}}),_0x106043['style'][_0x22817f(0x1e1)]=_0x22817f(0x184);}function showError(_0x4435d2){const _0x8a9041=_0x4718f9,_0x402dc6=document[_0x8a9041(0x20b)]('results');_0x402dc6[_0x8a9041(0x1fd)]='\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22alert\x20alert-danger\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<i\x20class=\x22fas\x20fa-exclamation-triangle\x22></i>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<strong>خطا:</strong>\x20'+_0x4435d2+_0x8a9041(0x21e),_0x402dc6[_0x8a9041(0x19f)][_0x8a9041(0x1e1)]='block';}function exportToExcel(){const _0x34bf29=_0x4718f9;if(!window['equations']||!window[_0x34bf29(0x23f)]){showError('هیچ\x20داده‌ای\x20برای\x20صادرات\x20یافت\x20نشد.');return;}try{const _0x5870ac=[[_0x34bf29(0x160)],[_0x34bf29(0x181),new Date()[_0x34bf29(0x14e)](_0x34bf29(0x20e))],[_0x34bf29(0x197),new Date()[_0x34bf29(0x1dc)](_0x34bf29(0x20e))],[''],[_0x34bf29(0x149)],[_0x34bf29(0x199),window['finalResults'][_0x34bf29(0x214)][_0x34bf29(0x22d)](0x8)],[_0x34bf29(0x165),window['finalResults'][_0x34bf29(0x1a7)][_0x34bf29(0x22d)](0x6)],[_0x34bf29(0x24d),window[_0x34bf29(0x23f)][_0x34bf29(0x15c)]['toFixed'](0x6)],[''],[_0x34bf29(0x1c5)],[_0x34bf29(0x238),'مقدار',_0x34bf29(0x14a),_0x34bf29(0x1a4),'مشتق\x20جزئی',_0x34bf29(0x240)]];subParameters[_0x34bf29(0x23c)]((_0x287a24,_0x50b6e9)=>{const _0x1ce285=_0x34bf29,_0x4e60f5=document[_0x1ce285(0x20b)]('subParamName'+_0x50b6e9)[_0x1ce285(0x223)]||_0x1ce285(0x1ab)+(_0x50b6e9+0x1),_0x12bb33=parseFloat(document['getElementById'](_0x1ce285(0x188)+_0x50b6e9)[_0x1ce285(0x223)])||0x0,_0x242952=document['getElementById']('subParamType'+_0x50b6e9)[_0x1ce285(0x223)],_0x1b72ab=window[_0x1ce285(0x213)][_0x1ce285(0x189)](_0x3cc41c=>_0x3cc41c[_0x1ce285(0x225)]===_0x4e60f5)||{};_0x5870ac['push']([_0x4e60f5,_0x12bb33[_0x1ce285(0x22d)](0x4),_0x242952===_0x1ce285(0x164)?_0x1ce285(0x1b6):_0x1ce285(0x167),(_0x1b72ab['ui']||0x0)[_0x1ce285(0x22d)](0x6),(_0x1b72ab[_0x1ce285(0x242)]||0x0)['toFixed'](0x6),(_0x1b72ab[_0x1ce285(0x157)]||0x0)[_0x1ce285(0x22d)](0x8)]);});const _0x1a4dea=XLSX[_0x34bf29(0x16d)][_0x34bf29(0x22a)](),_0x10d6c9=XLSX['utils'][_0x34bf29(0x185)](_0x5870ac);XLSX[_0x34bf29(0x16d)][_0x34bf29(0x154)](_0x1a4dea,_0x10d6c9,_0x34bf29(0x17a));const _0x4863d6=_0x34bf29(0x219)+new Date()['toISOString']()[_0x34bf29(0x198)]('T')[0x0]+_0x34bf29(0x1fc);XLSX[_0x34bf29(0x1db)](_0x1a4dea,_0x4863d6),setTimeout(()=>{const _0x39e13d=_0x34bf29,_0x36b449=document['createElement']('div');_0x36b449[_0x39e13d(0x215)]=_0x39e13d(0x230),_0x36b449[_0x39e13d(0x1fd)]=_0x39e13d(0x1aa)+_0x4863d6+_0x39e13d(0x1a8),document[_0x39e13d(0x193)]('#step4\x20.card-body')[_0x39e13d(0x224)](_0x36b449),setTimeout(()=>_0x36b449[_0x39e13d(0x186)](),0x1388);},0x1f4);}catch(_0x48648b){showError(_0x34bf29(0x1cd)+_0x48648b[_0x34bf29(0x1c4)]);}}function scrollToTop(){const _0x27bd5c=_0x4718f9;window[_0x27bd5c(0x208)]({'top':0x0,'behavior':_0x27bd5c(0x1b1)});}function _0x1495(){const _0x2d8838=['remove','</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22mt-4\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<h4\x20style=\x22color:\x20var(--secondary-color);\x20margin-bottom:\x201rem;\x22><i\x20class=\x22fas\x20fa-list-ul\x22></i>\x20جزئیات\x20محاسبات\x20زیرپارامترها:</h4>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20','subParamValue','find','log','subParamCalibration','main-content','MAHYAYEMAN','subParamResolution','\x5cleft(\x5cfrac{\x5cpartial\x20f}{\x5cpartial\x20','derivative','E\x20=\x20σ\x20/\x20ε','resolutionDivisor','querySelector','\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22form-section\x22\x20style=\x22margin-bottom:\x201rem;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<h5\x20style=\x22color:\x20var(--primary-color);\x20margin-bottom:\x200.5rem;\x22><i\x20class=\x22fas\x20fa-wrench\x22></i>\x20',')^2\x20=\x20','\x22\x20class=\x22form-select\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<option\x20value=\x22rectangular\x22>مستطیلی</option>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<option\x20value=\x22triangular\x22>مثلثی</option>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<option\x20value=\x22normal\x22>نرمال</option>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</select>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<label\x20class=\x22form-label\x22>ضریب\x20پوشش\x20(K):</label>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<input\x20type=\x22number\x22\x20id=\x22sourceK','ساعت\x20تولید:','split','مجموع\x20واریانس‌ها:','addEventListener','div','}^2\x20=\x20(','activation-error','sourceUncertainty','style','---\x20زیرپارامتر\x20','getItem','u_{rep,','reactivation-container','u\x20کل','symbol','<strong><i\x20class=\x22fas\x20fa-vial\x22></i>\x20مقادیر\x20تست‌های\x20تکراری:</strong>','combinedUncertainty','\x22\x20دانلود\x20شد.','}^2','<i\x20class=\x22fas\x20fa-check-circle\x22></i>\x20موفقیت!\x20فایل\x20\x22','زیرپارامتر\x20','}\x20=\x20\x5csqrt{','push','includes','\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22form-section-title\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<i\x20class=\x22fas\x20fa-wrench\x22></i>\x20زیرپارامتر\x20','u_{res,','smooth','\x20\x5ctimes\x20','math-equation\x20fade-in','15EQRtHQ','triangular','ثابت','44KGAoqB','testValue','slice','\x20وارد\x20کنید.','subParameters','\x22\x20class=\x22form-control\x22\x20step=\x22any\x22\x20placeholder=\x220.0\x22\x20/>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<label\x20class=\x22form-label\x22>عدم\x20قطعیت\x20دریفت:</label>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<input\x20type=\x22number\x22\x20id=\x22subParamDrift','خطا\x20در\x20تجزیه\x20فرمول:\x20','fade-in','</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22result-item\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22result-label\x22><i\x20class=\x22fas\x20fa-calculator\x22></i>\x20عدم\x20قطعیت\x20ترکیبی\x20(uc):</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22result-value\x22>','\x5ctext{','render','\x5ccdot','سینتکس\x20فرمول\x20نامعتبر\x20است.\x20از\x20عملیات\x20مجاز\x20(+,\x20-,\x20*,\x20/,\x20^,\x20sqrt)\x20استفاده\x20کنید.','message','===\x20جزئیات\x20زیرپارامترها\x20===','\x20ثابت\x20است}\x20\x5cRightarrow\x20u_{','sourceK','<code\x20style=\x22background:\x20#f1f5f9;\x20padding:\x200.5rem;\x20border-radius:\x204px;\x20display:\x20block;\x22>','step2','1/A','copy','isSymbolNode','خطا\x20در\x20ایجاد\x20فایل\x20اکسل:\x20','subParamName','step-indicator-','activated','7258365zRyluC','خطا\x20در\x20مشتق\x20فرمول\x20سفارشی:\x20','\x22\x20class=\x22form-control\x22\x20step=\x22any\x22\x20placeholder=\x220.0\x22\x20/>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<label\x20class=\x22form-label\x22>واحد:</label>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<input\x20type=\x22text\x22\x20id=\x22subParamUnit','</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22result-item\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22result-label\x22><i\x20class=\x22fas\x20fa-expand-arrows-alt\x22></i>\x20عدم\x20قطعیت\x20گسترده\x20(U,\x20K=2):</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22result-value\x22>','parse','reduce','customParamName',')\x20---','تنش','length','writeFile','toLocaleTimeString','usageLocked','.card','add','\x22\x20class=\x22form-control\x22\x20step=\x22any\x22\x20placeholder=\x220.001\x22\x20/>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<label\x20class=\x22form-label\x22>توزیع\x20رزولوشن:</label>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<select\x20id=\x22subParamResolutionDist','display','4646404lrQVqA','subParamType','grid','progress-fill','subParamTests','reactivationCode','\x22\x20/>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<label\x20class=\x22form-label\x22>نوع:</label>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<select\x20id=\x22subParamType','0.5rem\x200','\x20برای\x20زیرپارامتر\x20','3026144YJOUlJ','subParamResolutionDist','280586FhYlWH','observe','تعداد\x20زیرپارامترها\x20باید\x20حداقل\x201\x20باشد.','sqrt','</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div><strong>سهم:</strong>\x20','\x5csqrt{3}','}\x5cright)^2\x20\x5ccdot\x20u_{','تعداد\x20تست‌های\x20تکراری\x20برای\x20زیرپارامتر\x20','\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<label\x20class=\x22form-label\x22>تست\x20','toUpperCase','}\x20=\x20\x5csqrt{\x5cfrac{\x5csum_{i=1}^{','partialDerivatives','\x20\x5ccdot\x20','}(x_i\x20-\x20\x5cbar{x})^2}{','دسترسی\x20شما\x20مجدداً\x20فعال\x20شد.\x20می‌توانید\x202\x20بار\x20دیگر\x20استفاده\x20کنید.','.xlsx','innerHTML','\x22\x20class=\x22form-control\x22\x20min=\x221\x22\x20value=\x223\x22\x20onchange=\x22generateTestFields(','6gtvrzF','margin','gridColumn','u_{drift,','toString','عدم\x20قطعیت\x20محاسبه‌شده\x20صفر\x20یا\x20نامعتبر\x20است.','true','evaluate','toISOString','scrollTo','منبع\x20',')\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<i\x20class=\x22fas\x20fa-trash\x22></i>\x20حذف\x20زیرپارامتر\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</button>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20','getElementById','<h4\x20style=\x22text-align:\x20center;\x20margin-bottom:\x202rem;\x22><i\x20class=\x22fas\x20fa-square-root-alt\x22></i>\x20معادلات\x20تفصیلی\x20محاسبات:</h4>','\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<h3\x20style=\x22text-align:\x20center;\x20color:\x20var(--primary-color);\x20margin-bottom:\x202rem;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<i\x20class=\x22fas\x20fa-chart-bar\x22></i>\x20نتایج\x20محاسبات\x20عدم\x20قطعیت\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</h3>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22result-item\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22result-label\x22><i\x20class=\x22fas\x20fa-sum\x22></i>\x20مجموع\x20واریانس‌ها:</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22result-value\x22>','fa-IR','\x22\x20class=\x22form-control\x22\x20step=\x22any\x22\x20placeholder=\x22مقدار\x22\x20/>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20','}\x20=\x20\x5cfrac{','REACT-','کپی\x20کردن\x20ممنوع\x20است.','detailedResults','totalUncertainty','className','reactivation-error','replace','1/ε','uncertainty_detailed_report_','مساحت\x20(A)','\x22\x20class=\x22form-control\x22\x20value=\x222\x22\x20step=\x22any\x22\x20/>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22display:\x20flex;\x20align-items:\x20end;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<button\x20class=\x22btn\x20btn-danger\x22\x20onclick=\x22deleteExternalSource(','u_{cal,','</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div><strong>u\x20کل:</strong>\x20','\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20','substring','\x5cfrac{\x5cpartial\x20f}{\x5cpartial\x20','\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22form-section-title\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<i\x20class=\x22fas\x20fa-external-link-alt\x22></i>\x20منبع\x20اضافی\x20','sourceDistribution','value','appendChild','name','شما\x20','active','width','حجم\x20(V)','book_new','}\x20=\x200','completed','toFixed','\x20را\x20وارد\x20کنید.','لطفاً\x20مقدار\x20تست\x20','alert\x20alert-info\x20fade-in','unit','-F/(A^2)','u_{','querySelectorAll','1058912eXbnAE','(ثابت)','\x20=\x20','نام','activationChallenge','custom','isIntersecting','forEach','\x22\x20class=\x22form-select\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<option\x20value=\x22rectangular\x22>مستطیلی</option>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<option\x20value=\x22triangular\x22>مثلثی</option>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<option\x20value=\x22normal\x22>نرمال</option>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</select>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<label\x20class=\x22form-label\x22>عدم\x20قطعیت\x20کالیبراسیون:</label>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<input\x20type=\x22number\x22\x20id=\x22subParamCalibration','^{$1}','finalResults','سهم','\x20بار\x20دیگر\x20می‌توانید\x20استفاده\x20کنید.','partialDerivative','subParametersCount','\x22\x20class=\x22form-control\x22\x20value=\x22','usageCount','preventDefault','آیا\x20از\x20حذف\x20این\x20منبع\x20اضافی\x20مطمئن\x20هستید؟','sqrt3','scrollIntoView','form-section\x20fade-in',')\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<option\x20value=\x22variable\x22>متغیر</option>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<option\x20value=\x22constant\x22>ثابت</option>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</select>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<label\x20class=\x22form-label\x22>تعداد\x20تست\x20تکراری:</label>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<input\x20type=\x22number\x22\x20id=\x22subParamTests','شما\x20به\x20حداکثر\x20تعداد\x20استفاده\x20(2\x20بار)\x20رسیده‌اید.','عدم\x20قطعیت\x20گسترده\x20(U,\x20K=2):','}\x20=\x20','1/V','createElement','equations','abs','تنش\x20(σ)','mainParameter','===\x20نتایج\x20نهایی\x20===','نوع','filter','testFields','disabled','toLocaleDateString',':</label>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<input\x20type=\x22number\x22\x20id=\x22testValue','\x20ثابت\x20است.\x20عدم\x20قطعیت\x20صفر.','export-section','کپی‌برداری\x20مجاز\x20نیست.','\x22\x20class=\x22form-control\x22\x20step=\x22any\x22\x20placeholder=\x220.0\x22\x20/>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20id=\x22testFields','book_append_sheet','formula','کرنش\x20(ε)','contribution','\x20+\x20','activation-container','rectangular','flex','expandedUncertainty','setItem','2608730hDfmpQ','\x22\x20class=\x22test-fields\x22></div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<button\x20class=\x22btn\x20btn-danger\x20mt-3\x22\x20onclick=\x22deleteSubParameter(','گزارش\x20تفصیلی\x20محاسبه\x20عدم\x20قطعیت','sourceName','}}\x20=\x20','challenge','constant','عدم\x20قطعیت\x20ترکیبی\x20(uc):','\x22\x20class=\x22form-control\x22\x20placeholder=\x22مثلاً:\x20تأثیر\x20دما\x22\x20/>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<label\x20class=\x22form-label\x22>مقدار\x20عدم\x20قطعیت:</label>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<input\x20type=\x22number\x22\x20id=\x22sourceUncertainty','متغیر','classList','\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22parameter-grid\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<label\x20class=\x22form-label\x22>نام\x20منبع:</label>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<input\x20type=\x22text\x22\x20id=\x22sourceName','DOMContentLoaded','حداقل\x20یک\x20زیرپارامتر\x20باید\x20وجود\x20داشته\x20باشد.','charCodeAt','utils','===\x20شروع\x20محاسبات\x20عدم\x20قطعیت\x20===','selectstart','animationDelay','join',')\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<i\x20class=\x22fas\x20fa-trash\x22></i>\x20حذف\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</button>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20','}\x20=\x20\x5cfrac{s_{','trim','لطفاً\x20فرمول\x20را\x20به\x20شکل\x20y\x20=\x20عبارت\x20وارد\x20کنید.','\x5csqrt{6}','\x22\x20class=\x22form-control\x22\x20step=\x22any\x22\x20placeholder=\x220.0\x22\x20/>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<label\x20class=\x22form-label\x22>نوع\x20توزیع:</label>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<select\x20id=\x22sourceDistribution','none','مقدار\x20اندازه‌گیری:\x20','گزارش\x20تفصیلی','pow','step4','</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20','results','چگالی','رمز\x20ثانویه\x20نامعتبر\x20است.\x20لطفاً\x20با\x20توسعه‌دهنده\x20تماس\x20بگیرید.','تاریخ\x20تولید:','\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22parameter-grid\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<label\x20class=\x22form-label\x22>نام:</label>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<input\x20type=\x22text\x22\x20id=\x22subParamName','subParamDrift','block','aoa_to_sheet'];_0x1495=function(){return _0x2d8838;};return _0x1495();}function toggleSubParameterFields(_0x1932bc){const _0x39a38b=_0x4718f9,_0x30ad2b=document[_0x39a38b(0x20b)](_0x39a38b(0x1e3)+_0x1932bc)[_0x39a38b(0x223)],_0x2dda88=_0x30ad2b===_0x39a38b(0x164),_0x147c4c=document[_0x39a38b(0x20b)](_0x39a38b(0x1e6)+_0x1932bc),_0x51574a=document[_0x39a38b(0x20b)](_0x39a38b(0x14c)+_0x1932bc),_0x358c0a=document['getElementById']('subParamResolution'+_0x1932bc),_0x17b47a=document['getElementById'](_0x39a38b(0x1ec)+_0x1932bc),_0x2ae6e8=document[_0x39a38b(0x20b)](_0x39a38b(0x18b)+_0x1932bc),_0x27aeef=document[_0x39a38b(0x20b)]('subParamDrift'+_0x1932bc);_0x147c4c[_0x39a38b(0x14d)]=_0x2dda88,_0x358c0a[_0x39a38b(0x14d)]=_0x2dda88,_0x17b47a['disabled']=_0x2dda88,_0x2ae6e8['disabled']=_0x2dda88,_0x27aeef[_0x39a38b(0x14d)]=_0x2dda88,_0x2dda88?_0x51574a[_0x39a38b(0x19f)]['display']=_0x39a38b(0x178):(_0x51574a[_0x39a38b(0x19f)][_0x39a38b(0x1e1)]=_0x39a38b(0x1e4),generateTestFields(_0x1932bc));}function updateStepIndicator(_0x544bf4){const _0x162014=_0x4718f9;for(let _0x459958=0x1;_0x459958<=0x4;_0x459958++){const _0x58958e=document[_0x162014(0x20b)](_0x162014(0x1cf)+_0x459958);_0x58958e[_0x162014(0x168)][_0x162014(0x186)](_0x162014(0x227),'completed');if(_0x459958<_0x544bf4)_0x58958e[_0x162014(0x168)][_0x162014(0x1df)](_0x162014(0x22c));else _0x459958===_0x544bf4&&_0x58958e[_0x162014(0x168)]['add'](_0x162014(0x227));}const _0x5647a4=_0x544bf4/0x4*0x64;document[_0x162014(0x20b)](_0x162014(0x1e5))[_0x162014(0x19f)][_0x162014(0x228)]=_0x5647a4+'%',currentStep=_0x544bf4;}function toggleCustomParameter(){const _0x26e514=_0x4718f9,_0x5a0947=document['getElementById'](_0x26e514(0x148))[_0x26e514(0x223)],_0x5463d8=document['getElementById']('customParameter');_0x5a0947===_0x26e514(0x23a)?(_0x5463d8[_0x26e514(0x19f)][_0x26e514(0x1e1)]=_0x26e514(0x184),_0x5463d8['classList']['add'](_0x26e514(0x1be))):(_0x5463d8[_0x26e514(0x19f)]['display']=_0x26e514(0x178),validateAndGenerateSubParameters());}function validateAndGenerateSubParameters(){const _0x182e5d=_0x4718f9,_0x1d36db=document[_0x182e5d(0x20b)]('mainParameter')[_0x182e5d(0x223)];if(_0x1d36db===_0x182e5d(0x23a)){const _0x3c5c1a=document[_0x182e5d(0x20b)](_0x182e5d(0x155))['value'][_0x182e5d(0x174)](),_0x1db96c=document[_0x182e5d(0x20b)](_0x182e5d(0x1d7))[_0x182e5d(0x223)][_0x182e5d(0x174)](),_0xf53c6c=parseInt(document[_0x182e5d(0x20b)](_0x182e5d(0x243))['value']);if(!_0x1db96c){showError('لطفاً\x20نام\x20پارامتر\x20را\x20وارد\x20کنید.');return;}if(!_0x3c5c1a||!_0x3c5c1a[_0x182e5d(0x1ae)]('=')){showError(_0x182e5d(0x175));return;}if(_0xf53c6c<0x1){showError(_0x182e5d(0x1ef));return;}try{const _0x34b7ad=_0x3c5c1a[_0x182e5d(0x198)]('=')[0x1][_0x182e5d(0x174)]();math[_0x182e5d(0x1d5)](_0x34b7ad);}catch(_0x49d8de){showError(_0x182e5d(0x1c3));return;}}generateSubParameters();}function generateSubParameters(){const _0x1bca60=_0x4718f9,_0x48f756=document[_0x1bca60(0x20b)](_0x1bca60(0x148))[_0x1bca60(0x223)],_0x2bd29=document[_0x1bca60(0x20b)](_0x1bca60(0x1bb));_0x2bd29[_0x1bca60(0x1fd)]='',subParameters=[];let _0x4183a0=[];if(_0x48f756!==_0x1bca60(0x23a))_0x4183a0=predefinedParameters[_0x48f756][_0x1bca60(0x1bb)];else{const _0x21bc99=parseInt(document['getElementById']('subParametersCount')[_0x1bca60(0x223)]),_0x54d5ac=document[_0x1bca60(0x20b)](_0x1bca60(0x155))[_0x1bca60(0x223)][_0x1bca60(0x198)]('=')[0x1][_0x1bca60(0x174)]();try{const _0x3aeb13=math[_0x1bca60(0x1d5)](_0x54d5ac),_0x30f574=[];_0x3aeb13['traverse'](function(_0x1e1baf){const _0x40084a=_0x1bca60;_0x1e1baf[_0x40084a(0x1cc)]&&!math[_0x1e1baf[_0x40084a(0x225)]]&&_0x1e1baf[_0x40084a(0x225)]!=='e'&&_0x1e1baf[_0x40084a(0x225)]!=='pi'&&(!_0x30f574[_0x40084a(0x1ae)](_0x1e1baf['name'])&&_0x30f574[_0x40084a(0x1ad)](_0x1e1baf['name']));});for(let _0x41dc8d=0x0;_0x41dc8d<_0x21bc99;_0x41dc8d++){_0x4183a0[_0x1bca60(0x1ad)]({'name':_0x30f574[_0x41dc8d]||_0x1bca60(0x1ab)+(_0x41dc8d+0x1),'unit':'','symbol':_0x30f574[_0x41dc8d]||'x'+(_0x41dc8d+0x1)});}}catch(_0x25dfe9){showError(_0x1bca60(0x1bd)+_0x25dfe9[_0x1bca60(0x1c4)]);return;}}_0x4183a0[_0x1bca60(0x23c)]((_0xf1dccf,_0x2ab9ab)=>{const _0x11203f=_0x1bca60,_0x83b207=document[_0x11203f(0x144)]('div');_0x83b207[_0x11203f(0x215)]='form-section\x20fade-in',_0x83b207[_0x11203f(0x1fd)]=_0x11203f(0x1af)+(_0x2ab9ab+0x1)+':\x20'+_0xf1dccf['name']+_0x11203f(0x182)+_0x2ab9ab+_0x11203f(0x244)+_0xf1dccf['name']+'\x22\x20/>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<label\x20class=\x22form-label\x22>مقدار\x20اندازه‌گیری:</label>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<input\x20type=\x22number\x22\x20id=\x22subParamValue'+_0x2ab9ab+_0x11203f(0x1d3)+_0x2ab9ab+_0x11203f(0x244)+_0xf1dccf[_0x11203f(0x231)]+_0x11203f(0x1e8)+_0x2ab9ab+'\x22\x20class=\x22form-select\x22\x20onchange=\x22toggleSubParameterFields('+_0x2ab9ab+_0x11203f(0x24b)+_0x2ab9ab+_0x11203f(0x1fe)+_0x2ab9ab+')\x22\x20/>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<label\x20class=\x22form-label\x22>رزولوشن\x20دستگاه:</label>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<input\x20type=\x22number\x22\x20id=\x22subParamResolution'+_0x2ab9ab+_0x11203f(0x1e0)+_0x2ab9ab+_0x11203f(0x23d)+_0x2ab9ab+_0x11203f(0x1bc)+_0x2ab9ab+_0x11203f(0x153)+_0x2ab9ab+_0x11203f(0x15f)+_0x2ab9ab+_0x11203f(0x20a),_0x2bd29[_0x11203f(0x224)](_0x83b207),subParameters[_0x11203f(0x1ad)]({'id':_0x2ab9ab,'symbol':_0xf1dccf[_0x11203f(0x1a5)]}),setTimeout(()=>{toggleSubParameterFields(_0x2ab9ab);},0x64);}),document[_0x1bca60(0x20b)](_0x1bca60(0x1c9))['style'][_0x1bca60(0x1e1)]=_0x1bca60(0x184),document[_0x1bca60(0x20b)]('step3')['style']['display']='block',document['getElementById'](_0x1bca60(0x17c))['style'][_0x1bca60(0x1e1)]=_0x1bca60(0x184),updateStepIndicator(0x2);}function generateTestFields(_0x11b0fc){const _0x5255a3=_0x4718f9,_0x3ce7f8=parseInt(document[_0x5255a3(0x20b)](_0x5255a3(0x1e6)+_0x11b0fc)[_0x5255a3(0x223)])||0x0,_0x3b8e12=document['getElementById']('testFields'+_0x11b0fc),_0x20a301=document[_0x5255a3(0x20b)](_0x5255a3(0x1e3)+_0x11b0fc)['value'];if(_0x20a301===_0x5255a3(0x164)||_0x3ce7f8<=0x0){_0x3b8e12[_0x5255a3(0x1fd)]='',_0x3b8e12[_0x5255a3(0x19f)][_0x5255a3(0x1e1)]=_0x5255a3(0x178);return;}_0x3b8e12[_0x5255a3(0x19f)][_0x5255a3(0x1e1)]='grid',_0x3b8e12[_0x5255a3(0x1fd)]='';const _0x15d337=document[_0x5255a3(0x144)](_0x5255a3(0x19b));_0x15d337[_0x5255a3(0x19f)][_0x5255a3(0x201)]='1\x20/\x20-1',_0x15d337['innerHTML']=_0x5255a3(0x1a6),_0x3b8e12[_0x5255a3(0x224)](_0x15d337);for(let _0x35f81a=0x0;_0x35f81a<_0x3ce7f8;_0x35f81a++){const _0x347f37=document[_0x5255a3(0x144)](_0x5255a3(0x19b));_0x347f37[_0x5255a3(0x1fd)]=_0x5255a3(0x1f5)+(_0x35f81a+0x1)+_0x5255a3(0x14f)+_0x11b0fc+'_'+_0x35f81a+_0x5255a3(0x20f),_0x3b8e12['appendChild'](_0x347f37);}}function deleteSubParameter(_0x5a2151){const _0x247e0f=_0x4718f9;if(subParameters[_0x247e0f(0x1da)]<=0x1){showError(_0x247e0f(0x16b));return;}confirm('آیا\x20از\x20حذف\x20این\x20زیرپارامتر\x20مطمئن\x20هستید؟')&&(subParameters=subParameters[_0x247e0f(0x14b)](_0xbad4ee=>_0xbad4ee['id']!==_0x5a2151),generateSubParameters());}function addExternalSource(){const _0x2c44c3=_0x4718f9,_0x14daa3=document[_0x2c44c3(0x20b)]('externalSources'),_0xa07b21=externalSources[_0x2c44c3(0x1da)],_0x595caf=document[_0x2c44c3(0x144)](_0x2c44c3(0x19b));_0x595caf[_0x2c44c3(0x215)]=_0x2c44c3(0x24a),_0x595caf[_0x2c44c3(0x1fd)]=_0x2c44c3(0x221)+(_0xa07b21+0x1)+_0x2c44c3(0x169)+_0xa07b21+_0x2c44c3(0x166)+_0xa07b21+_0x2c44c3(0x177)+_0xa07b21+_0x2c44c3(0x196)+_0xa07b21+_0x2c44c3(0x21b)+_0xa07b21+_0x2c44c3(0x172),_0x14daa3['appendChild'](_0x595caf),externalSources[_0x2c44c3(0x1ad)]({'id':_0xa07b21}),updateStepIndicator(0x3);}function deleteExternalSource(_0x48641c){const _0x3eeabe=_0x4718f9;if(confirm(_0x3eeabe(0x247))){externalSources=externalSources['filter'](_0x38780b=>_0x38780b['id']!==_0x48641c);const _0x489531=document[_0x3eeabe(0x20b)]('externalSources');_0x489531[_0x3eeabe(0x1fd)]='';const _0x3a516c=[...externalSources];externalSources=[],_0x3a516c[_0x3eeabe(0x23c)](()=>addExternalSource());}}document[_0x4718f9(0x19a)]('contextmenu',function(_0x5f0327){const _0x54d2d3=_0x4718f9;_0x5f0327[_0x54d2d3(0x246)](),alert(_0x54d2d3(0x152));}),document[_0x4718f9(0x19a)](_0x4718f9(0x16f),function(_0x5ae6e6){const _0x366fba=_0x4718f9;_0x5ae6e6[_0x366fba(0x246)]();}),document[_0x4718f9(0x19a)](_0x4718f9(0x1cb),function(_0x1e3b88){const _0x4664d9=_0x4718f9;_0x1e3b88[_0x4664d9(0x246)](),alert(_0x4664d9(0x212));});
+    </script>
+</body>
+</html>
